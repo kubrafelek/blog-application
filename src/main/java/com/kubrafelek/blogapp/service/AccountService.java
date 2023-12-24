@@ -12,19 +12,19 @@ public class AccountService {
 
     private final AccountRepository accountRepository;
 
-    private final PasswordEncoder passwordEncoder;
-
-    public AccountService(AccountRepository accountRepository, PasswordEncoder passwordEncoder) {
+    public AccountService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     public Account save(Account account) {
-        account.setPassword(passwordEncoder.encode(account.getPassword()));
         return accountRepository.save(account);
     }
 
     public Optional<Account> findByEmail(String mail) {
         return accountRepository.findOneByEmail(mail);
+    }
+
+    public Optional<Account> findOneByEmail(String authUsername) {
+        return accountRepository.findOneByEmail(authUsername);
     }
 }

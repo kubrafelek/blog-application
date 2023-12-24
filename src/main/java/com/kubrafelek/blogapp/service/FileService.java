@@ -11,6 +11,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +28,7 @@ public class FileService {
 
     public void save(MultipartFile file) {
         try {
-            Files.copy(file.getInputStream(), this.root.resolve(file.getOriginalFilename()));
+            Files.copy(file.getInputStream(), this.root.resolve(Objects.requireNonNull(file.getOriginalFilename())));
         } catch (Exception ex) {
             throw new RuntimeException(ex.getMessage());
         }

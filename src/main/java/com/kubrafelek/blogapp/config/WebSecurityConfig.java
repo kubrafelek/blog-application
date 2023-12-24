@@ -29,22 +29,8 @@ public class WebSecurityConfig {
                     auth.requestMatchers(antMatcher("/webjars/**")).permitAll();
                     auth.requestMatchers(antMatcher("/")).permitAll();
                     auth.requestMatchers(antMatcher("/rss/**")).permitAll();
-                    auth.requestMatchers(antMatcher("/register/**")).permitAll();
                     auth.requestMatchers(antMatcher("/posts/**")).permitAll();
-                    auth.requestMatchers(PathRequest.toH2Console()).permitAll();
-                    auth.anyRequest().authenticated();
-                })
-
-                .formLogin(form -> form
-                        .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .usernameParameter("email")
-                        .passwordParameter("password")
-                        .defaultSuccessUrl("/")
-                        .failureUrl("/login?error")
-                        .permitAll()
-                );
-
+                });
 
         return http.build();
     }

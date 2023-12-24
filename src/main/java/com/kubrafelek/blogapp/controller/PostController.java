@@ -2,40 +2,43 @@ package com.kubrafelek.blogapp.controller;
 
 import com.kubrafelek.blogapp.model.Account;
 import com.kubrafelek.blogapp.model.Post;
-import com.kubrafelek.blogapp.repository.AccountRepository;
 import com.kubrafelek.blogapp.service.AccountService;
+import com.kubrafelek.blogapp.service.FileService;
 import com.kubrafelek.blogapp.service.PostService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.security.Principal;
 import java.util.Optional;
 
+
 @Controller
+@Slf4j
 public class PostController {
 
     private final PostService postService;
     private final AccountService accountService;
-    private final AccountRepository accountRepository;
+    private final FileService fileService;
 
-    public PostController(PostService postService, AccountService accountService,
-                          AccountRepository accountRepository) {
+    public PostController(PostService postService, AccountService accountService, FileService fileService) {
         this.postService = postService;
         this.accountService = accountService;
-        this.accountRepository = accountRepository;
+        this.fileService = fileService;
     }
 
     @GetMapping("/posts/{id}")
     public String getPost(@PathVariable Long id, Model model) {
-        Optional<Post> optionalPost = postService.getById(id);
 
+        // find post by id
+        Optional<Post> optionalPost = this.postService.getById(id);
+
+        // if post exists put it in model
         if (optionalPost.isPresent()) {
-            Post post = optionalPost.orElseThrow();
+            Post post = optionalPost.get();
             model.addAttribute("post", post);
             return "post";
         } else {
@@ -43,71 +46,78 @@ public class PostController {
         }
     }
 
-    @GetMapping("/posts/new")
-    public String createNewPost(Model model){
-        Optional<Account> optionalAccount = accountService.findByEmail("kbr.flk8@gmail.com");
-        if(optionalAccount.isPresent()){
-            Post post = new Post();
-            post.setAccount(optionalAccount.get());
-            model.addAttribute("post", post);
-            return "post_new";
-        }else {
-            return "404";
-        }
-    }
-
-    @PostMapping("/posts/new")
-    public String saveNewPost(@ModelAttribute Post post){
-        postService.save(post);
-        return "redirect:/posts/" + post.getId();
-    }
-
     @PostMapping("/posts/{id}")
-    @PreAuthorize("isAuthenticated()")
-    public String updatePost(@PathVariable Long id, Post post, BindingResult bindingResult, Model model){
-        Optional<Post> optionalPost = postService.getById(id);
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public String updatePost(@PathVariable Long id, Post post, @RequestParam("file") MultipartFile file) {
 
-        if(optionalPost.isPresent()){
+        Optional<Post> optionalPost = postService.getById(id);
+        if (optionalPost.isPresent()) {
             Post existingPost = optionalPost.get();
 
             existingPost.setTitle(post.getTitle());
             existingPost.setBody(post.getBody());
 
+            try {
+                fileService.save(file);
+                existingPost.setImageFilePath(file.getOriginalFilename());
+            } catch (Exception e) {
+                log.error("Error processing file: {}", file.getOriginalFilename());
+            }
+
             postService.save(existingPost);
-            return "redirect:/posts/" + post.getId();
-        }else {
-            return "404";
         }
+
+        return "redirect:/posts/" + post.getId();
+    }
+
+    @GetMapping("/posts/new")
+    public String createNewPost(Model model) {
+
+        Post post = new Post();
+        model.addAttribute("post", post);
+        return "post_new";
+    }
+
+    @PostMapping("/posts/new")
+    public String createNewPost(@ModelAttribute Post post) {
+        Account account = accountService.findOneByEmail("admin.admin@domain.com")
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+
+        post.setAccount(account);
+        postService.save(post);
+        return "redirect:/";
     }
 
     @GetMapping("/posts/{id}/edit")
-    @PreAuthorize("isAuthenticated()")
-    public String getPostForEdit(@PathVariable Long id, Model model){
-        Optional<Post> optionalPost = postService.getById(id);
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public String getPostForEdit(@PathVariable Long id, Model model) {
 
-        if(optionalPost.isPresent()){
+        // find post by id
+        Optional<Post> optionalPost = postService.getById(id);
+        // if post exist put it in model
+        if (optionalPost.isPresent()) {
             Post post = optionalPost.get();
             model.addAttribute("post", post);
             return "post_edit";
-        }else {
+        } else {
             return "404";
         }
     }
 
     @GetMapping("/posts/{id}/delete")
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public String deletePost(@PathVariable Long id){
-        Optional<Post> optionalPost = postService.getById(id);
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public String deletePost(@PathVariable Long id) {
 
-        if(optionalPost.isPresent()){
+        // find post by id
+        Optional<Post> optionalPost = postService.getById(id);
+        if (optionalPost.isPresent()) {
             Post post = optionalPost.get();
 
             postService.delete(post);
             return "redirect:/";
-        }else {
+        } else {
             return "404";
         }
-
-
     }
+
 }

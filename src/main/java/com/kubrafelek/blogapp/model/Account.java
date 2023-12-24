@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -35,15 +36,9 @@ public class Account {
 
     LocalDateTime updatedAt;
 
+    String adminRole;
+
     @JsonIgnore
     @OneToMany(mappedBy = "account")
     List<Post> posts;
-
-    @ManyToMany(fetch = FetchType.EAGER)
-    @JoinTable(
-            name = "account_authority",
-            joinColumns = {@JoinColumn(name = "account_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "authority_name", referencedColumnName = "name")})
-    Set<Authority> authorities = new HashSet<>();
-
 }
