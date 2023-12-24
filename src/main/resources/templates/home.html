@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="x-ua-compatible" content="IE-edge" charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Blog :: Home</title>
+    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.0/css/bootstrap.min.css}" />
+</head>
+<body>
+<div class="container">
+    <h1>Blog Application</h1>
+    <hr/>
+    <ul>
+        <li><a th:href="@{/posts/new}">New Post</a></li>
+    </ul>
+    <div class="posts-container">
+        <div class="post" th:each="post : ${posts}">
+            <h3>
+                <a th:href="@{'/posts/' + ${post.id}}"
+                   th:text="${post.title}">
+                    Title
+                </a>
+            </h3>
+            <h5 th:text="'Written by ' + ${post.account.firstName}"></h5>
+            <h5 th:text="'Published on ' + ${post.createdAt}"> created</h5>
+            <p th:text="${post.body}"> body text </p>
+
+            <br/>
+        </div>
+    </div>
+    <hr/>
+    <ul sec:authorize="!isAuthenticated()">
+        <li><a th:href="@{/register}">Register</a></li>
+        <li><a th:href="@{/login}">Login</a></li>
+    </ul>
+
+    <div sec:authorize="isAuthenticated()">
+        <form th:action="@{/logout}" method="post">
+            <div>
+                <label>Hi, <span sec:authentication="name">Username</span></label>
+            </div>
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
