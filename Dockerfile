@@ -5,6 +5,6 @@ RUN mvn clean package -DskipTests
 LABEL authors="kubrafelek"
 
 FROM openjdk:17.0.1-jdk-slim
-COPY --from=build target/demo-0.0.1-SNAPSHOT.jar blog.jar
+COPY --from=build target/blog-app-0.0.1-SNAPSHOT.jar blog-app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "blog.jar"]
